@@ -8,6 +8,8 @@ import { clientFormSchema } from "@/lib/validation/client-form"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+export const revalidate = 0
+export const fetchCache = "force-no-store"
 
 const statusLabels: Record<ClientStatus, string> = {
   LEAD: "Prospecto",
