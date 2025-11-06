@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NEON_DATABASE_URL")
+}
+
+// ============= ENUMS =============
+
+enum UserRole {
+  OWNER
+  ADMIN
+  PROJECT_MANAGER
+  DEVELOPER
+  SUPPORT
+  FINANCE
+  PARTNER_MANAGER
+}
+
+enum ClientStatus {
+  LEAD
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum ProjectStatus {
+  DISCOVERY
+  IN_PROGRESS
+  REVIEW
+  PRODUCTION
+  PAUSED
+  CLOSED
+}
+
+enum TicketStatus {
+  NEW
+  IN_PROGRESS
+  WAITING_CLIENT
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+}
+
+enum PartnerStatus {
+  ACTIVE
+  PAUSED
+  INACTIVE
+}
+
+enum PartnerType {
+  AGENCY
+  FREELANCER
+  AFFILIATE
+  INTERNAL_SALES
+}
+
+enum PartnerReferralStatus {
+  PENDING
+  WON
+  LOST
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum AutomationType {
+  N8N
+  MAKE
+  ZAPIER
+  CUSTOM
+  VOICE_AGENT
+  EMAIL_AGENT
+  API_INTEGRATION
+}
+
+enum AutomationStatus {
+  DEVELOPMENT
+  TESTING
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+// ============= MODELS =============
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  role          UserRole
+  timezone      String   @default("UTC")
+  
+  projectsManaged   Project[]   @relation("ProjectManager")
+  ticketsAssigned   Ticket[]    @relation("TicketAssignee")
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Client {
+  id            String        @id @default(cuid())
+  name          String
+  contactName   String?
+  contactEmail  String?
+  country       String?
+  timezone      String?
+  status        ClientStatus  @default(LEAD)
+
+  projects      Project[]
+  tickets       Ticket[]
+  invoices      Invoice[]
+  referrals     PartnerReferral[]
+  automations   Automation[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  name          String
+  type          String
+  status        ProjectStatus @default(DISCOVERY)
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  managerId     String?
+  manager       User?         @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  description   String?
+  startDate     DateTime?
+  dueDate       DateTime?
+
+  tickets       Ticket[]
+  invoices      Invoice[]
+  referrals     PartnerReferral[]
+  automations   Automation[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Ticket {
+  id            String         @id @default(cuid())
+  title         String
+  description   String?
+  status        TicketStatus   @default(NEW)
+  priority      TicketPriority @default(MEDIUM)
+
+  clientId      String?
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  projectId     String?
+  project       Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  assigneeId    String?
+  assignee      User?          @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  projectId     String?
+  project       Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  amount        Float
+  currency      String        @default("EUR")
+  description   String?
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime?
+  status        InvoiceStatus @default(DRAFT)
+
+  referralId    String?
+  referral      PartnerReferral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Automation {
+  id            String             @id @default(cuid())
+  name          String
+  type          AutomationType     @default(CUSTOM)
+  status        AutomationStatus   @default(DEVELOPMENT)
+  
+  clientId      String
+  client        Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  projectId     String?
+  project       Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  description   String?
+  workflowUrl   String?
+  documentationUrl String?
+  
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+// ============= PARTNERS =============
+
+model Partner {
+  id              String           @id @default(cuid())
+  name            String
+  type            PartnerType      @default(AFFILIATE)
+  status          PartnerStatus    @default(ACTIVE)
+
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+
+  trackingCode    String?          @unique
+  baseCommissionRate Float?
+
+  referrals       PartnerReferral[]
+  payouts         PartnerPayout[]
+
+  notes           String?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model PartnerReferral {
+  id              String                @id @default(cuid())
+  partnerId       String
+  partner         Partner               @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  clientId        String?
+  client          Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  projectId       String?
+  project         Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  status          PartnerReferralStatus @default(PENDING)
+  commissionRate  Float?
+  commissionBase  Float?
+  commissionAmount Float?
+  currency        String?              @default("EUR")
+
+  invoices        Invoice[]
+  payouts         PartnerPayout[]
+
+  notes           String?
+  
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
+model PartnerPayout {
+  id              String       @id @default(cuid())
+  partnerId       String
+  partner         Partner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  referralId      String?
+  referral        PartnerReferral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
+
+  amount          Float
+  currency        String       @default("EUR")
+  status          PayoutStatus @default(PENDING)
+  payoutDate      DateTime?
+  method          String?
+
+  notes           String?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
