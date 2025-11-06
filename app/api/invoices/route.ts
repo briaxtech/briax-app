@@ -3,6 +3,9 @@ import { InvoiceStatus } from "@prisma/client"
 
 import { prisma } from "@/lib/db"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const statusLabels: Record<InvoiceStatus, string> = {
   DRAFT: "Borrador",
   SENT: "Enviada",

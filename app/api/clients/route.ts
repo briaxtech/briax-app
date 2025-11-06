@@ -6,6 +6,9 @@ import { prisma } from "@/lib/db"
 import { SERVICE_TEMPLATES } from "@/lib/clients/service-templates"
 import { clientFormSchema } from "@/lib/validation/client-form"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const statusLabels: Record<ClientStatus, string> = {
   LEAD: "Prospecto",
   ACTIVE: "Activo",

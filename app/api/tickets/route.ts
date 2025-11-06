@@ -3,6 +3,9 @@ import { TicketPriority, TicketStatus } from "@prisma/client"
 
 import { prisma } from "@/lib/db"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const statusLabels: Record<TicketStatus, string> = {
   NEW: "Nuevo",
   IN_PROGRESS: "En progreso",

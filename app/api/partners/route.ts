@@ -3,6 +3,9 @@ import { PartnerStatus, PartnerType, PayoutStatus } from "@prisma/client"
 
 import { prisma } from "@/lib/db"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const typeLabels: Record<PartnerType, string> = {
   AGENCY: "Agencia",
   FREELANCER: "Freelancer",

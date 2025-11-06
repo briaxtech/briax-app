@@ -5,6 +5,9 @@ import { z } from "zod"
 import { prisma } from "@/lib/db"
 import { getProjectStatusLabel, PROJECT_STATUS_ORDER } from "@/lib/projects/constants"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const paramsSchema = z.object({
   id: z.string().min(1),
 })

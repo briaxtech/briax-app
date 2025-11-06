@@ -6,6 +6,9 @@ import { prisma } from "@/lib/db"
 import { sendProjectNotificationEmail } from "@/lib/email/resend"
 import { getProjectStatusLabel } from "@/lib/projects/constants"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const paramsSchema = z.object({
   id: z.string().min(1),
 })

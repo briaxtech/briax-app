@@ -5,6 +5,9 @@ import { z } from "zod"
 import { prisma } from "@/lib/db"
 import { sendProjectNotificationEmail } from "@/lib/email/resend"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const paramsSchema = z.object({
   id: z.string().min(1),
 })

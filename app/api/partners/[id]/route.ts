@@ -4,6 +4,9 @@ import { z } from "zod"
 
 import { prisma } from "@/lib/db"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const paramsSchema = z.object({
   id: z.string().min(1),
 })
@@ -21,9 +24,12 @@ const statusLabels: Record<PartnerStatus, string> = {
   INACTIVE: "Inactivo",
 }
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
+  let partnerId: string | null = null
   try {
-    const { id } = paramsSchema.parse(params)
+    const resolvedParams = await context.params
+    const { id } = paramsSchema.parse(resolvedParams)
+    partnerId = id
 
     const partner = await prisma.partner.findUnique({
       where: { id },
@@ -85,7 +91,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       })),
     })
   } catch (error) {
-    console.error(`GET /api/partners/${params?.id} error:`, error)
+    console.error(`GET /api/partners/${partnerId ?? "unknown"} error:`, error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ message: "Identificador invalido" }, { status: 400 })
     }

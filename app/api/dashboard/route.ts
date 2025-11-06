@@ -11,6 +11,9 @@ import { startOfMonth, subMonths } from "date-fns"
 
 import { prisma } from "@/lib/db"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const MONTH_LABELS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 
 export async function GET() {
