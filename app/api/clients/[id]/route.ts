@@ -7,16 +7,19 @@ import { SERVICE_TEMPLATES } from "@/lib/clients/service-templates"
 import { clientFormSchema } from "@/lib/validation/client-form"
 import { serviceIdFromProjectType } from "@/lib/clients/service-templates"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const paramsSchema = z.object({
   id: z.string().min(1),
 })
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  let clientId: string | null = null
   try {
-    const { id } = paramsSchema.parse(params)
+    const resolvedParams = await context.params
+    const { id } = paramsSchema.parse(resolvedParams)
+    clientId = id
 
     const client = await prisma.client.findUnique({
       where: { id },
@@ -44,7 +47,7 @@ export async function GET(
 
     return NextResponse.json({ client: { ...client, services } })
   } catch (error) {
-    console.error(`GET /api/clients/${params?.id} error:`, error)
+    console.error(`GET /api/clients/${clientId ?? "unknown"} error:`, error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ message: "Identificador invalido" }, { status: 400 })
     }
@@ -52,12 +55,12 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  let clientId: string | null = null
   try {
-    const { id } = paramsSchema.parse(params)
+    const resolvedParams = await context.params
+    const { id } = paramsSchema.parse(resolvedParams)
+    clientId = id
     const payload = await req.json()
     const data = clientFormSchema.parse(payload)
 
@@ -104,7 +107,7 @@ export async function PATCH(
 
     return NextResponse.json({ client: updatedClient })
   } catch (error) {
-    console.error(`PATCH /api/clients/${params?.id} error:`, error)
+    console.error(`PATCH /api/clients/${clientId ?? "unknown"} error:`, error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: "Datos invalidos", issues: error.issues },
