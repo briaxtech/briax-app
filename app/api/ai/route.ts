@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto"
-
 import { NextRequest, NextResponse } from "next/server"
 
 import { prisma } from "@/lib/db"
@@ -7,6 +5,7 @@ import { getProjectStatusLabel } from "@/lib/projects/constants"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 const DEFAULT_LIMITS = {
   clients: 12,
@@ -166,13 +165,13 @@ export async function POST(req: NextRequest) {
 
     const question = body.question.trim()
     const userId: string =
-      typeof body.userId === "string" && body.userId.trim().length > 0
-        ? body.userId.trim()
-        : "dashboard-anon"
+      typeof body.userId === "string" && body.userId.trim().length > 0 ? body.userId.trim() : "dashboard-anon"
     const sessionId: string =
       typeof body.sessionId === "string" && body.sessionId.trim().length > 0
         ? body.sessionId.trim()
-        : randomUUID()
+        : typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `session-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
     let contextPayload: string | undefined
     if (typeof body.context === "string") {
