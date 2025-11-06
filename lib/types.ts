@@ -9,8 +9,6 @@ import type {
   PartnerType,
   PartnerReferralStatus,
   PayoutStatus,
-  AutomationType,
-  AutomationStatus,
 } from "@prisma/client"
 
 export type {
@@ -24,8 +22,6 @@ export type {
   PartnerType,
   PartnerReferralStatus,
   PayoutStatus,
-  AutomationType,
-  AutomationStatus,
 }
 
 // API Response Types

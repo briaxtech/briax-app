@@ -1,95 +1,137 @@
+import { notFound } from "next/navigation"
+
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ProjectStatusTimeline } from "@/components/projects/project-status-timeline"
-import { Calendar, User, DollarSign } from "lucide-react"
+import { prisma } from "@/lib/db"
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const timelineSteps = [
-    { id: "1", status: "DISCOVERY", label: "Discovery", completed: true },
-    { id: "2", status: "IN_PROGRESS", label: "In Progress", completed: true },
-    { id: "3", status: "REVIEW", label: "Review", completed: false },
-    { id: "4", status: "PRODUCTION", label: "Production", completed: false },
-  ]
+export const dynamic = "force-dynamic"
+
+const statusOrder = ["DISCOVERY", "IN_PROGRESS", "REVIEW", "PRODUCTION", "PAUSED", "CLOSED"] as const
+
+const statusLabels: Record<string, string> = {
+  DISCOVERY: "Descubrimiento",
+  IN_PROGRESS: "En progreso",
+  REVIEW: "Revision",
+  PRODUCTION: "Produccion",
+  PAUSED: "En pausa",
+  CLOSED: "Cerrado",
+}
+
+const typeLabels: Record<string, string> = {
+  website: "Sitio web",
+  ecommerce: "E-commerce",
+  automation: "Automatizacion",
+  data: "Datos",
+  support: "Soporte",
+  consulting: "Consultoria",
+}
+
+const formatDate = (value: Date | null) => {
+  if (!value) return "-"
+  return value.toLocaleDateString("es-ES")
+}
+
+export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  const project = await prisma.project.findUnique({
+    where: { id },
+    include: {
+      client: { select: { id: true, name: true } },
+      manager: { select: { id: true, name: true } },
+      tickets: {
+        orderBy: { createdAt: "desc" },
+        include: { client: { select: { name: true } } },
+      },
+      invoices: {
+        orderBy: { issueDate: "desc" },
+        include: { client: { select: { name: true } } },
+      },
+    },
+  })
+
+  if (!project) {
+    notFound()
+  }
+
+  const currentStatusIndex = statusOrder.indexOf(project.status as (typeof statusOrder)[number])
+
+  const timeline = statusOrder.map((status, index) => ({
+    status,
+    label: statusLabels[status],
+    completed: index <= currentStatusIndex && project.status !== "PAUSED",
+    current: index === currentStatusIndex,
+  }))
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Website Redesign</h1>
-          <p className="text-muted-foreground mt-2">Project ID: {params.id}</p>
+          <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
+          <p className="text-muted-foreground mt-2">
+            Proyecto ID: {project.id} - Cliente: {project.client?.name ?? "Sin cliente"}
+          </p>
         </div>
-        <Badge className="bg-purple-500/20 text-purple-400">IN PROGRESS</Badge>
+        <Badge className="bg-purple-500/20 text-purple-400">{statusLabels[project.status] ?? project.status}</Badge>
       </div>
 
-      {/* Project Info Card */}
       <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
-        <div className="grid grid-cols-4 gap-6">
-          <div className="flex items-start gap-3">
-            <User className="w-5 h-5 text-primary mt-1" />
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Client</p>
-              <p className="text-foreground font-medium">TechCorp Inc</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-primary mt-1" />
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Due Date</p>
-              <p className="text-foreground font-medium">Apr 15, 2024</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <User className="w-5 h-5 text-primary mt-1" />
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Manager</p>
-              <p className="text-foreground font-medium">John Manager</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <DollarSign className="w-5 h-5 text-primary mt-1" />
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Budget</p>
-              <p className="text-foreground font-medium">€15,000</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Detail label="Tipo" value={typeLabels[project.type] ?? project.type} />
+          <Detail label="Inicio" value={formatDate(project.startDate)} />
+          <Detail label="Entrega estimada" value={formatDate(project.dueDate)} />
+          <Detail label="Responsable" value={project.manager?.name ?? "No asignado"} />
         </div>
       </Card>
 
-      {/* Timeline */}
       <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
-        <h3 className="text-lg font-semibold text-foreground mb-6">Project Timeline</h3>
-        <ProjectStatusTimeline steps={timelineSteps} />
+        <h3 className="text-lg font-semibold text-foreground mb-6">Cronograma del proyecto</h3>
+        <div className="flex items-center gap-4 overflow-x-auto">
+          {timeline.map((step, index) => (
+            <div key={step.status} className="flex items-center gap-4">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold ${
+                    step.completed ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 text-center">{step.label}</p>
+              </div>
+              {index < timeline.length - 1 && (
+                <div className={`w-12 h-1 mb-6 ${timeline[index + 1].completed ? "bg-primary" : "bg-muted"}`} />
+              )}
+            </div>
+          ))}
+        </div>
       </Card>
 
-      {/* Description & Details */}
-      <div className="grid grid-cols-3 gap-6">
-        <Card className="col-span-2 p-6 border-border bg-card/50 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Description</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2 p-6 border-border bg-card/50 backdrop-blur-sm">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Descripcion</h3>
           <p className="text-muted-foreground leading-relaxed">
-            Complete redesign of TechCorp's corporate website with modern design patterns, improved user experience, and
-            mobile responsiveness. This includes new landing page, services section, and client portal integration.
+            {project.description ?? "Sin descripcion registrada para este proyecto."}
           </p>
         </Card>
-
         <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Quick Stats</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Indicadores rapidos</h3>
           <div className="space-y-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Tickets</p>
-              <p className="text-2xl font-bold text-foreground">8</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Invoices</p>
-              <p className="text-2xl font-bold text-foreground">3</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Days Left</p>
-              <p className="text-2xl font-bold text-foreground">22</p>
-            </div>
+            <Detail label="Tickets asociados" value={String(project.tickets.length)} />
+            <Detail label="Facturas emitidas" value={String(project.invoices.length)} />
+            <Detail label="Ultima actualizacion" value={formatDate(project.updatedAt)} />
           </div>
         </Card>
       </div>
+    </div>
+  )
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground mb-2">{label}</p>
+      <p className="text-foreground font-medium">{value}</p>
     </div>
   )
 }

@@ -19,18 +19,24 @@ const statusColors = {
   CANCELLED: "bg-red-500/20 text-red-400",
 }
 
+const statusLabels: Record<keyof typeof statusColors, string> = {
+  PENDING: "Pendiente",
+  PAID: "Pagado",
+  CANCELLED: "Cancelado",
+}
+
 export function PayoutHistory({ payouts }: PayoutHistoryProps) {
   return (
     <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
-      <h3 className="text-lg font-semibold text-foreground mb-6">Payout History</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-6">Historial de pagos</h3>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Date</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Amount</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Method</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Fecha</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Importe</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Metodo</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -40,7 +46,9 @@ export function PayoutHistory({ payouts }: PayoutHistoryProps) {
                 <td className="px-4 py-3 text-sm text-foreground font-medium">{payout.amount}</td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">{payout.method}</td>
                 <td className="px-4 py-3">
-                  <Badge className={statusColors[payout.status as keyof typeof statusColors]}>{payout.status}</Badge>
+                  <Badge className={statusColors[payout.status as keyof typeof statusColors]}>
+                    {statusLabels[payout.status as keyof typeof statusLabels]}
+                  </Badge>
                 </td>
               </tr>
             ))}

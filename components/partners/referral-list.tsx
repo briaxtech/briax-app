@@ -21,10 +21,16 @@ const statusColors = {
   LOST: "bg-red-500/20 text-red-400",
 }
 
+const statusLabels: Record<keyof typeof statusColors, string> = {
+  PENDING: "Pendiente",
+  WON: "Ganado",
+  LOST: "Perdido",
+}
+
 export function ReferralList({ referrals }: ReferralListProps) {
   return (
     <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
-      <h3 className="text-lg font-semibold text-foreground mb-6">Referrals</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-6">Referidos</h3>
       <div className="space-y-4">
         {referrals.map((referral) => (
           <div
@@ -38,14 +44,16 @@ export function ReferralList({ referrals }: ReferralListProps) {
             </div>
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Commission</p>
+                <p className="text-xs text-muted-foreground mb-1">Comision</p>
                 <p className="text-foreground font-medium">{referral.commissionAmount}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Rate</p>
+                <p className="text-xs text-muted-foreground mb-1">Porcentaje</p>
                 <p className="text-foreground font-medium">{referral.commissionRate}</p>
               </div>
-              <Badge className={statusColors[referral.status as keyof typeof statusColors]}>{referral.status}</Badge>
+              <Badge className={statusColors[referral.status as keyof typeof statusColors]}>
+                {statusLabels[referral.status as keyof typeof statusLabels]}
+              </Badge>
             </div>
           </div>
         ))}

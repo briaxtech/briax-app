@@ -5,19 +5,19 @@ import { Plus } from "lucide-react"
 export default function PartnersPage() {
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Partners</h1>
-          <p className="text-muted-foreground mt-2">Manage affiliates, resellers, and collaborators</p>
+          <h1 className="text-3xl font-bold text-foreground">Socios</h1>
+          <p className="text-muted-foreground mt-2">Gestiona afiliados, revendedores y colaboradores</p>
         </div>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
-          New Partner
+          Nuevo socio
         </Button>
       </div>
 
-      {/* Partner Table */}
+      {/* Tabla de socios */}
       <PartnerTable />
     </div>
   )

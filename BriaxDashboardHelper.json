@@ -1,0 +1,214 @@
+{
+  "name": "Briax dashboard helper.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "80f65850-8872-4fb7-95fc-5ae643e47ce3",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -944,
+        -16
+      ],
+      "id": "e9517685-7c2b-4f8e-b8d7-86ffc092e1af",
+      "name": "Webhook",
+      "webhookId": "80f65850-8872-4fb7-95fc-5ae643e47ce3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=### PREGUNTA DEL USUARIO\n{{$node[\"Webhook\"].json[\"body\"][\"question\"]}}\n\n### CONTEXTO DEL FRONTEND\n{{$node[\"Webhook\"].json[\"body\"][\"context\"] || '---'}}\n\n### DATOS DEL DASHBOARD (JSON)\n{{$json.db_context || '---'}}",
+        "options": {
+          "systemMessage": "Eres \"Briax Dashboard Assistant\", el asistente IA del panel de control de BrIAx.\n\nTu objetivo es ayudar al usuario del dashboard a:\n- Entender el estado de sus servicios y proyectos (webs, automatizaciones, etc.).\n- Ver facturación, pagos, estado de suscripciones o planes.\n- Revisar tickets/consultas y su estado.\n- Entender métricas o resúmenes que aparezcan en el dashboard.\n- Orientarlo sobre qué puede hacer o a qué sección del dashboard ir.\n\nREGLAS IMPORTANTES:\n\n1) Usa SIEMPRE la información estructurada que te llega bajo:\n   - \"CONTEXTO DEL FRONTEND\"\n   - \"DATOS DEL DASHBOARD (DESDE BD)\"\n\n2) Si la información NO aparece ahí, asume que NO la sabes.\n   - No inventes números, fechas ni estados de proyectos.\n   - Di claramente algo como: \n     \"En los datos que tengo ahora no aparece esa información. Puede que aún no esté registrada en tu dashboard.\"\n\n3) Idioma:\n   - Responde en el mismo idioma en que te habla el usuario (español, italiano, inglés, etc.).\n   - Mantén un tono claro, profesional y cercano.\n\n4) Estilo de respuesta:\n   - Sé directo y concreto.\n   - Siempre que tenga sentido, devuelve la información en formato de lista o pasos.\n   - Si el usuario pide “qué puedo hacer ahora”, sugiere acciones claras (por ejemplo: \n     \"Puedes revisar la sección de 'Facturación' para ver tus pagos pendientes\" o \n     \"Pide a tu equipo que actualice el estado del proyecto en el dashboard\").\n\n5) Si falta información:\n   - Haz UNA o DOS preguntas concretas para poder ayudar mejor (por ejemplo: \n     \"¿Sobre qué proyecto en concreto quieres el estado?\").\n\n6) Seguridad de datos:\n   - Nunca muestres datos de otros usuarios; todo lo que veas asume que pertenece únicamente al usuario autenticado cuyo ID viene en la petición."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        -16
+      ],
+      "id": "988193fe-95a6-4ec9-9481-0e5e30ccf65c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -288,
+        160
+      ],
+      "id": "baf62773-99b6-4070-9f13-c7565d2af26b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "AyGfViCCMopkAbku",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -192,
+        160
+      ],
+      "id": "e5886642-046f-44fc-8285-f49b7f0c2541",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT json_build_object(\n  'userId', '{{$json.body.userId}}',\n\n  -- CLIENTES (sin datos sensibles)\n  'clients', (\n    SELECT coalesce(json_agg(c), '[]'::json) FROM (\n      SELECT\n        c.id,\n        c.name,\n        c.status,\n        c.country,\n        c.industry,\n        c.\"createdAt\",\n        c.\"updatedAt\"\n      FROM \"Client\" c\n      ORDER BY c.\"updatedAt\" DESC\n      LIMIT 50\n    ) c\n  ),\n\n  -- PROYECTOS donde el usuario es manager\n  'projects', (\n    SELECT coalesce(json_agg(p), '[]'::json) FROM (\n      SELECT\n        p.id,\n        p.name,\n        p.type,\n        p.status,\n        p.\"startDate\",\n        p.\"dueDate\",\n        p.\"createdAt\",\n        p.\"updatedAt\",\n        c.id   AS client_id,\n        c.name AS client_name\n      FROM \"Project\" p\n      JOIN \"Client\" c ON c.id = p.\"clientId\"\n      WHERE p.\"managerId\" = '{{$json.body.userId}}'\n      ORDER BY p.\"updatedAt\" DESC\n      LIMIT 50\n    ) p\n  ),\n\n  -- TICKETS asignados al usuario\n  'tickets', (\n    SELECT coalesce(json_agg(t), '[]'::json) FROM (\n      SELECT\n        t.id,\n        t.title,\n        t.status,\n        t.priority,\n        t.\"createdAt\",\n        t.\"updatedAt\",\n        c.id   AS client_id,\n        c.name AS client_name,\n        p.id   AS project_id,\n        p.name AS project_name\n      FROM \"Ticket\" t\n      LEFT JOIN \"Client\"  c ON c.id = t.\"clientId\"\n      LEFT JOIN \"Project\" p ON p.id = t.\"projectId\"\n      WHERE t.\"assigneeId\" = '{{$json.body.userId}}'\n      ORDER BY t.\"createdAt\" DESC\n      LIMIT 50\n    ) t\n  ),\n\n  -- FACTURAS (para visión financiera general)\n  'invoices', (\n    SELECT coalesce(json_agg(i), '[]'::json) FROM (\n      SELECT\n        i.id,\n        i.amount,\n        i.currency,\n        i.status,\n        i.\"issueDate\",\n        i.\"dueDate\",\n        i.description,\n        c.id   AS client_id,\n        c.name AS client_name,\n        p.id   AS project_id,\n        p.name AS project_name\n      FROM \"Invoice\" i\n      JOIN \"Client\" c ON c.id = i.\"clientId\"\n      LEFT JOIN \"Project\" p ON p.id = i.\"projectId\"\n      ORDER BY i.\"issueDate\" DESC\n      LIMIT 50\n    ) i\n  ),\n\n  -- PARTNERS (solo info general)\n  'partners', (\n    SELECT coalesce(json_agg(p), '[]'::json) FROM (\n      SELECT\n        p.id,\n        p.name,\n        p.type,\n        p.status,\n        p.\"createdAt\",\n        p.\"updatedAt\"\n      FROM \"Partner\" p\n      ORDER BY p.\"updatedAt\" DESC\n      LIMIT 50\n    ) p\n  ),\n\n  -- REFERRALS\n  'partnerReferrals', (\n    SELECT coalesce(json_agg(r), '[]'::json) FROM (\n      SELECT\n        pr.id,\n        pr.status,\n        pr.\"commissionRate\",\n        pr.\"commissionBase\",\n        pr.\"commissionAmount\",\n        pr.currency,\n        pr.\"createdAt\",\n        pr.\"updatedAt\",\n        p.id   AS partner_id,\n        p.name AS partner_name,\n        c.id   AS client_id,\n        c.name AS client_name,\n        proj.id   AS project_id,\n        proj.name AS project_name\n      FROM \"PartnerReferral\" pr\n      JOIN \"Partner\" p ON p.id = pr.\"partnerId\"\n      LEFT JOIN \"Client\"  c    ON c.id = pr.\"clientId\"\n      LEFT JOIN \"Project\" proj ON proj.id = pr.\"projectId\"\n      ORDER BY pr.\"createdAt\" DESC\n      LIMIT 50\n    ) r\n  ),\n\n  -- PAYOUTS a partners\n  'partnerPayouts', (\n    SELECT coalesce(json_agg(po), '[]'::json) FROM (\n      SELECT\n        po.id,\n        po.amount,\n        po.currency,\n        po.status,\n        po.\"payoutDate\",\n        po.method,\n        po.\"createdAt\",\n        po.\"updatedAt\",\n        p.id   AS partner_id,\n        p.name AS partner_name\n      FROM \"PartnerPayout\" po\n      JOIN \"Partner\" p ON p.id = po.\"partnerId\"\n      ORDER BY po.\"createdAt\" DESC\n      LIMIT 50\n    ) po\n  )\n) AS dashboard_context;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -736,
+        -16
+      ],
+      "id": "60265fef-a4c9-463e-8265-735bf347a780",
+      "name": "Fetch Dashboard Context",
+      "credentials": {
+        "postgres": {
+          "id": "QkO25pISI2ktQr1Y",
+          "name": "Briax Dashboard DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "46eb6648-d7d2-48bd-b383-bbe3a6443f15",
+              "name": "=db_context",
+              "value": "={{ JSON.stringify($json.dashboard_context, null, 2) }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -528,
+        -16
+      ],
+      "id": "c8a2ab59-040b-4345-9f85-d8515008acea",
+      "name": "Build DB Context"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        64,
+        -16
+      ],
+      "id": "5203443a-6357-40a7-82d9-dacad823d278",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Dashboard Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dashboard Context": {
+      "main": [
+        [
+          {
+            "node": "Build DB Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build DB Context": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ea2db61b-f04f-427e-94fa-528649b17b07",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5003d77a9c5f89243c9dbf4f2c8151ca05f3e8fc1c06fa07764be1ea3df2ae96"
+  },
+  "id": "uUseXgOc7WXoDc1M",
+  "tags": []
+}

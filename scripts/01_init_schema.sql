@@ -18,8 +18,11 @@ CREATE TABLE IF NOT EXISTS "Client" (
   name TEXT NOT NULL,
   "contactName" TEXT,
   "contactEmail" TEXT,
+  phone TEXT,
   country TEXT,
   timezone TEXT,
+  industry TEXT,
+  notes TEXT,
   status TEXT NOT NULL DEFAULT 'LEAD',
   "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -38,6 +41,19 @@ CREATE TABLE IF NOT EXISTS "Project" (
   "dueDate" TIMESTAMP,
   "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ProjectUpdates table
+CREATE TABLE IF NOT EXISTS "ProjectUpdate" (
+  id TEXT PRIMARY KEY,
+  "projectId" TEXT NOT NULL REFERENCES "Project"(id) ON DELETE CASCADE,
+  type TEXT NOT NULL DEFAULT 'NOTE',
+  title TEXT,
+  message TEXT NOT NULL,
+  "authorName" TEXT,
+  "authorEmail" TEXT,
+  "notifyTeam" BOOLEAN NOT NULL DEFAULT FALSE,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tickets table
@@ -66,21 +82,6 @@ CREATE TABLE IF NOT EXISTS "Invoice" (
   "dueDate" TIMESTAMP,
   status TEXT NOT NULL DEFAULT 'DRAFT',
   "referralId" TEXT REFERENCES "PartnerReferral"(id) ON DELETE SET NULL,
-  "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Automations table
-CREATE TABLE IF NOT EXISTS "Automation" (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL DEFAULT 'CUSTOM',
-  status TEXT NOT NULL DEFAULT 'DEVELOPMENT',
-  "clientId" TEXT NOT NULL REFERENCES "Client"(id) ON DELETE CASCADE,
-  "projectId" TEXT REFERENCES "Project"(id) ON DELETE SET NULL,
-  description TEXT,
-  "workflowUrl" TEXT,
-  "documentationUrl" TEXT,
   "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -140,8 +141,7 @@ CREATE INDEX IF NOT EXISTS "Ticket_projectId" ON "Ticket"("projectId");
 CREATE INDEX IF NOT EXISTS "Ticket_assigneeId" ON "Ticket"("assigneeId");
 CREATE INDEX IF NOT EXISTS "Invoice_clientId" ON "Invoice"("clientId");
 CREATE INDEX IF NOT EXISTS "Invoice_projectId" ON "Invoice"("projectId");
-CREATE INDEX IF NOT EXISTS "Automation_clientId" ON "Automation"("clientId");
-CREATE INDEX IF NOT EXISTS "Automation_projectId" ON "Automation"("projectId");
+CREATE INDEX IF NOT EXISTS "ProjectUpdate_projectId" ON "ProjectUpdate"("projectId");
 CREATE INDEX IF NOT EXISTS "PartnerReferral_partnerId" ON "PartnerReferral"("partnerId");
 CREATE INDEX IF NOT EXISTS "PartnerReferral_clientId" ON "PartnerReferral"("clientId");
 CREATE INDEX IF NOT EXISTS "PartnerReferral_projectId" ON "PartnerReferral"("projectId");

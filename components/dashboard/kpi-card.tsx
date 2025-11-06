@@ -21,7 +21,7 @@ export function KPICard({ label, value, icon: Icon, trend }: KPICardProps) {
           {trend && (
             <p className={`text-xs font-medium mt-3 ${trend.isPositive ? "text-green-400" : "text-red-400"}`}>
               {trend.isPositive ? "+" : "-"}
-              {trend.value}% from last month
+              {trend.value}% frente al mes anterior
             </p>
           )}
         </div>

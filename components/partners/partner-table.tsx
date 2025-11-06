@@ -1,123 +1,136 @@
 "use client"
 
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { MoreHorizontal } from "lucide-react"
 
-interface Partner {
+interface PartnerRow {
   id: string
   name: string
   type: string
+  typeLabel: string
   status: string
-  referrals: number
-  totalRevenue: string
-  commissionsPaid: string
-  commissionsPending: string
+  statusLabel: string
+  referralsCount: number
+  totalRevenue: number
+  commissionsPaid: number
+  commissionsPending: number
 }
 
-const mockPartners: Partner[] = [
-  {
-    id: "1",
-    name: "Tech Solutions Agency",
-    type: "AGENCY",
-    status: "ACTIVE",
-    referrals: 12,
-    totalRevenue: "€150,000",
-    commissionsPaid: "€15,000",
-    commissionsPending: "€2,500",
-  },
-  {
-    id: "2",
-    name: "Sarah Freelance",
-    type: "FREELANCER",
-    status: "ACTIVE",
-    referrals: 8,
-    totalRevenue: "€85,000",
-    commissionsPaid: "€8,500",
-    commissionsPending: "€1,200",
-  },
-  {
-    id: "3",
-    name: "Digital Growth Partners",
-    type: "AGENCY",
-    status: "ACTIVE",
-    referrals: 5,
-    totalRevenue: "€65,000",
-    commissionsPaid: "€6,500",
-    commissionsPending: "€800",
-  },
-  {
-    id: "4",
-    name: "John Affiliate",
-    type: "AFFILIATE",
-    status: "PAUSED",
-    referrals: 3,
-    totalRevenue: "€35,000",
-    commissionsPaid: "€3,500",
-    commissionsPending: "€0",
-  },
-]
-
-const typeColors = {
+const typeColors: Record<string, string> = {
   AGENCY: "bg-purple-500/20 text-purple-400",
   FREELANCER: "bg-blue-500/20 text-blue-400",
   AFFILIATE: "bg-green-500/20 text-green-400",
   INTERNAL_SALES: "bg-orange-500/20 text-orange-400",
 }
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-500/20 text-green-400",
   PAUSED: "bg-yellow-500/20 text-yellow-400",
   INACTIVE: "bg-gray-500/20 text-gray-400",
 }
 
+const formatCurrency = (value: number) =>
+  `EUR ${new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`
+
 export function PartnerTable() {
+  const [partners, setPartners] = useState<PartnerRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchPartners = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/partners", { method: "GET" })
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}))
+        throw new Error(body?.message ?? "No se pudo obtener la lista de socios")
+      }
+      const body = await response.json()
+      setPartners(body.partners ?? [])
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado al cargar socios")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchPartners()
+  }, [fetchPartners])
+
   return (
     <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Partner</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Type</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Referrals</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Total Revenue</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Paid</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Pending</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Socio</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Tipo</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Estado</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Referidos</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Ingresos generados</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Pagado</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Pendiente</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {mockPartners.map((partner) => (
-              <tr key={partner.id} className="border-b border-border hover:bg-sidebar-accent/30 transition-colors">
-                <td className="px-6 py-4">
-                  <Link
-                    href={`/partners/${partner.id}`}
-                    className="text-foreground font-medium hover:text-primary transition-colors"
-                  >
-                    {partner.name}
-                  </Link>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge className={typeColors[partner.type as keyof typeof typeColors]}>{partner.type}</Badge>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge className={statusColors[partner.status as keyof typeof statusColors]}>{partner.status}</Badge>
-                </td>
-                <td className="px-6 py-4 text-sm text-foreground font-medium">{partner.referrals}</td>
-                <td className="px-6 py-4 text-sm text-foreground font-medium">{partner.totalRevenue}</td>
-                <td className="px-6 py-4 text-sm text-green-400">{partner.commissionsPaid}</td>
-                <td className="px-6 py-4 text-sm text-yellow-400">{partner.commissionsPending}</td>
-                <td className="px-6 py-4 text-right">
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-6 text-center text-sm text-muted-foreground">
+                  Cargando socios...
                 </td>
               </tr>
-            ))}
+            ) : error ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-6 text-center text-sm text-destructive">
+                  {error}
+                </td>
+              </tr>
+            ) : partners.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-6 text-center text-sm text-muted-foreground">
+                  No hay socios registrados.
+                </td>
+              </tr>
+            ) : (
+              partners.map((partner) => (
+                <tr key={partner.id} className="border-b border-border hover:bg-sidebar-accent/30 transition-colors">
+                  <td className="px-6 py-4">
+                    <Link
+                      href={`/partners/${partner.id}`}
+                      className="text-foreground font-medium hover:text-primary transition-colors"
+                    >
+                      {partner.name}
+                    </Link>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge className={typeColors[partner.type] ?? "bg-muted text-muted-foreground"}>
+                      {partner.typeLabel}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge className={statusColors[partner.status] ?? "bg-muted text-muted-foreground"}>
+                      {partner.statusLabel}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">{partner.referralsCount}</td>
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">{formatCurrency(partner.totalRevenue)}</td>
+                  <td className="px-6 py-4 text-sm text-green-400">{formatCurrency(partner.commissionsPaid)}</td>
+                  <td className="px-6 py-4 text-sm text-yellow-400">{formatCurrency(partner.commissionsPending)}</td>
+                  <td className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

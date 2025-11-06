@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("NEON_DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 // ============= ENUMS =============
@@ -36,6 +36,12 @@ enum ProjectStatus {
   PRODUCTION
   PAUSED
   CLOSED
+}
+
+enum ProjectUpdateType {
+  NOTE
+  STATUS_CHANGE
+  MILESTONE
 }
 
 enum TicketStatus {
@@ -85,24 +91,6 @@ enum PayoutStatus {
   CANCELLED
 }
 
-enum AutomationType {
-  N8N
-  MAKE
-  ZAPIER
-  CUSTOM
-  VOICE_AGENT
-  EMAIL_AGENT
-  API_INTEGRATION
-}
-
-enum AutomationStatus {
-  DEVELOPMENT
-  TESTING
-  ACTIVE
-  PAUSED
-  ARCHIVED
-}
-
 // ============= MODELS =============
 
 model User {
@@ -124,15 +112,17 @@ model Client {
   name          String
   contactName   String?
   contactEmail  String?
+  phone         String?
   country       String?
   timezone      String?
+  industry      String?
+  notes         String?
   status        ClientStatus  @default(LEAD)
 
   projects      Project[]
   tickets       Ticket[]
   invoices      Invoice[]
   referrals     PartnerReferral[]
-  automations   Automation[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -156,7 +146,7 @@ model Project {
   tickets       Ticket[]
   invoices      Invoice[]
   referrals     PartnerReferral[]
-  automations   Automation[]
+  updates       ProjectUpdate[] @relation("ProjectUpdates")
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -204,24 +194,17 @@ model Invoice {
   updatedAt     DateTime      @updatedAt
 }
 
-model Automation {
-  id            String             @id @default(cuid())
-  name          String
-  type          AutomationType     @default(CUSTOM)
-  status        AutomationStatus   @default(DEVELOPMENT)
-  
-  clientId      String
-  client        Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  projectId     String?
-  project       Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
-
-  description   String?
-  workflowUrl   String?
-  documentationUrl String?
-  
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+model ProjectUpdate {
+  id          String            @id @default(cuid())
+  projectId   String
+  project     Project           @relation("ProjectUpdates", fields: [projectId], references: [id], onDelete: Cascade)
+  type        ProjectUpdateType @default(NOTE)
+  title       String?
+  message     String
+  authorName  String?
+  authorEmail String?
+  notifyTeam  Boolean           @default(false)
+  createdAt   DateTime          @default(now())
 }
 
 // ============= PARTNERS =============

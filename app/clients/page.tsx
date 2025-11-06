@@ -1,23 +1,19 @@
-import { Button } from "@/components/ui/button"
 import { ClientTable } from "@/components/clients/client-table"
-import { Plus } from "lucide-react"
+import { NewClientDialog } from "@/components/clients/new-client-dialog"
 
 export default function ClientsPage() {
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Clients</h1>
-          <p className="text-muted-foreground mt-2">Manage all client accounts and relationships</p>
+          <h1 className="text-3xl font-bold text-foreground">Clientes</h1>
+          <p className="text-muted-foreground mt-2">Gestiona las cuentas y las relaciones con tus clientes</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          New Client
-        </Button>
+        <NewClientDialog />
       </div>
 
-      {/* Client Table */}
+      {/* Tabla de clientes */}
       <ClientTable />
     </div>
   )

@@ -2,24 +2,24 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Users, FolderOpen, Ticket, FileText, Zap, Users2, Settings, LogOut } from "lucide-react"
+import { BarChart3, Users, FolderOpen, Ticket, FileText, Users2, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigationItems = [
   {
-    label: "Dashboard",
+    label: "Panel",
     href: "/dashboard",
     icon: BarChart3,
     roles: ["OWNER", "ADMIN", "PROJECT_MANAGER", "DEVELOPER", "SUPPORT", "FINANCE", "PARTNER_MANAGER"],
   },
   {
-    label: "Clients",
+    label: "Clientes",
     href: "/clients",
     icon: Users,
     roles: ["OWNER", "ADMIN", "PROJECT_MANAGER", "SUPPORT"],
   },
   {
-    label: "Projects",
+    label: "Proyectos",
     href: "/projects",
     icon: FolderOpen,
     roles: ["OWNER", "ADMIN", "PROJECT_MANAGER", "DEVELOPER"],
@@ -31,25 +31,19 @@ const navigationItems = [
     roles: ["OWNER", "ADMIN", "PROJECT_MANAGER", "DEVELOPER", "SUPPORT"],
   },
   {
-    label: "Invoices",
+    label: "Facturas",
     href: "/invoices",
     icon: FileText,
     roles: ["OWNER", "ADMIN", "FINANCE"],
   },
   {
-    label: "Automations",
-    href: "/automations",
-    icon: Zap,
-    roles: ["OWNER", "ADMIN", "DEVELOPER"],
-  },
-  {
-    label: "Partners",
+    label: "Socios",
     href: "/partners",
     icon: Users2,
     roles: ["OWNER", "ADMIN", "PARTNER_MANAGER"],
   },
   {
-    label: "Settings",
+    label: "Configuracion",
     href: "/settings",
     icon: Settings,
     roles: ["OWNER", "ADMIN"],
@@ -67,7 +61,7 @@ export function Sidebar() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
             <BarChart3 className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg text-sidebar-foreground">Agency</span>
+          <span className="font-bold text-lg text-sidebar-foreground">Briax</span>
         </Link>
       </div>
 
@@ -101,7 +95,7 @@ export function Sidebar() {
       <div className="border-t border-sidebar-border p-4">
         <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
           <LogOut className="w-5 h-5" />
-          <span>Logout</span>
+          <span>Cerrar sesion</span>
         </button>
       </div>
     </aside>

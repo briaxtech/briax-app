@@ -5,19 +5,19 @@ import { Plus } from "lucide-react"
 export default function TicketsPage() {
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Tickets</h1>
-          <p className="text-muted-foreground mt-2">Support requests and project issues</p>
+          <p className="text-muted-foreground mt-2">Solicitudes de soporte e incidencias de proyecto</p>
         </div>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
-          New Ticket
+          Nuevo ticket
         </Button>
       </div>
 
-      {/* Ticket Table */}
+      {/* Tabla de tickets */}
       <TicketTable />
     </div>
   )

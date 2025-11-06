@@ -5,19 +5,19 @@ import { Plus } from "lucide-react"
 export default function InvoicesPage() {
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Invoices</h1>
-          <p className="text-muted-foreground mt-2">Manage billing and payments</p>
+          <h1 className="text-3xl font-bold text-foreground">Facturas</h1>
+          <p className="text-muted-foreground mt-2">Gestiona la facturacion y los cobros</p>
         </div>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
-          New Invoice
+          Nueva factura
         </Button>
       </div>
 
-      {/* Invoice Table */}
+      {/* Tabla de facturas */}
       <InvoiceTable />
     </div>
   )
