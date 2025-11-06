@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { getProjectStatusLabel } from "@/lib/projects/constants"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
 const DEFAULT_LIMITS = {
   clients: 12,
   projects: 18,
