@@ -79,6 +79,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       invoices: {
         orderBy: { issueDate: "desc" },
       },
+      accesses: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   })
 
@@ -123,6 +126,17 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     dueDate: invoice.dueDate ? invoice.dueDate.toISOString() : null,
   }))
 
+  const accesses = client.accesses.map((access) => ({
+    id: access.id,
+    service: access.service,
+    username: access.username,
+    password: access.password,
+    url: access.url,
+    notes: access.notes,
+    createdAt: access.createdAt.toISOString(),
+    updatedAt: access.updatedAt.toISOString(),
+  }))
+
   const serviceCodes = Array.from(
     new Set(
       client.projects
@@ -155,7 +169,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <Card className="p-6 border-border bg-card/50 backdrop-blur-sm">
-        <ClientDetailTabs client={clientInfo} projects={projects} tickets={tickets} invoices={invoices} />
+        <ClientDetailTabs
+          clientId={client.id}
+          client={clientInfo}
+          projects={projects}
+          tickets={tickets}
+          invoices={invoices}
+          accesses={accesses}
+        />
       </Card>
     </div>
   )

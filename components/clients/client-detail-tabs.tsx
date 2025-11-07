@@ -5,7 +5,9 @@ import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 
-type TabType = "overview" | "projects" | "tickets" | "invoices" | "services"
+import { ClientAccessSection } from "./client-access-section"
+
+type TabType = "overview" | "projects" | "tickets" | "invoices" | "services" | "accesses"
 
 interface ClientInfo {
   contactName: string | null
@@ -44,11 +46,24 @@ interface InvoiceInfo {
   dueDate: string | null
 }
 
+interface AccessInfo {
+  id: string
+  service: string
+  username: string | null
+  password: string | null
+  url: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 interface ClientDetailTabsProps {
+  clientId: string
   client: ClientInfo
   projects: ProjectInfo[]
   tickets: TicketInfo[]
   invoices: InvoiceInfo[]
+  accesses: AccessInfo[]
 }
 
 const serviceIconColors = ["bg-primary/15", "bg-secondary/20", "bg-muted/30"]
@@ -69,7 +84,7 @@ const formatDate = (value: string | null) => {
   return date.toLocaleDateString("es-ES")
 }
 
-export function ClientDetailTabs({ client, projects, tickets, invoices }: ClientDetailTabsProps) {
+export function ClientDetailTabs({ clientId, client, projects, tickets, invoices, accesses }: ClientDetailTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview")
 
   const tabs: { id: TabType; label: string }[] = [
@@ -78,23 +93,24 @@ export function ClientDetailTabs({ client, projects, tickets, invoices }: Client
     { id: "tickets", label: "Tickets" },
     { id: "invoices", label: "Facturas" },
     { id: "services", label: "Servicios" },
+    { id: "accesses", label: "Accesos" },
   ]
 
-const serviceCards = projects.map((project, index) => ({
-  id: project.id,
-  title: project.name,
-  type: project.type,
-  statusLabel: project.statusLabel,
-  dueDate: project.dueDate ? formatDate(project.dueDate) : "-",
-  color: serviceIconColors[index % serviceIconColors.length],
-}))
+  const serviceCards = projects.map((project, index) => ({
+    id: project.id,
+    title: project.name,
+    type: project.type,
+    statusLabel: project.statusLabel,
+    dueDate: project.dueDate ? formatDate(project.dueDate) : "-",
+    color: serviceIconColors[index % serviceIconColors.length],
+  }))
 
-const clientStatusColors: Record<string, string> = {
-  LEAD: "bg-blue-500/20 text-blue-400",
-  ACTIVE: "bg-green-500/20 text-green-400",
-  PAUSED: "bg-yellow-500/20 text-yellow-400",
-  CLOSED: "bg-red-500/20 text-red-400",
-}
+  const clientStatusColors: Record<string, string> = {
+    LEAD: "bg-blue-500/20 text-blue-400",
+    ACTIVE: "bg-green-500/20 text-green-400",
+    PAUSED: "bg-yellow-500/20 text-yellow-400",
+    CLOSED: "bg-red-500/20 text-red-400",
+  }
 
   return (
     <div className="space-y-6">
@@ -239,6 +255,8 @@ const clientStatusColors: Record<string, string> = {
             )}
           </div>
         )}
+
+        {activeTab === "accesses" && <ClientAccessSection clientId={clientId} initialAccesses={accesses} />}
       </div>
     </div>
   )

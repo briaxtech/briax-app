@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       projects: projects.map((project) => ({
         id: project.id,
+        clientId: project.clientId,
         name: project.name,
         clientName: project.client?.name ?? "Sin cliente",
         clientEmail: project.client?.contactEmail ?? null,

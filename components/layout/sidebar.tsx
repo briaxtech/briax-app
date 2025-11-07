@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Users, FolderOpen, Ticket, FileText, Users2, Settings, LogOut } from "lucide-react"
+import { BarChart3, Users, FolderOpen, Ticket, FileText, Users2, Settings, LogOut, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLogout } from "@/hooks/use-logout"
 
 const navigationItems = [
   {
@@ -52,6 +53,7 @@ const navigationItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { logout, pending } = useLogout()
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
@@ -93,9 +95,16 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-4">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
-          <LogOut className="w-5 h-5" />
-          <span>Cerrar sesion</span>
+        <button
+          onClick={logout}
+          disabled={pending}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground transition-colors",
+            pending ? "opacity-70 cursor-not-allowed" : "hover:bg-sidebar-accent",
+          )}
+        >
+          {pending ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+          <span>{pending ? "Cerrando..." : "Cerrar sesion"}</span>
         </button>
       </div>
     </aside>

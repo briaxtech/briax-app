@@ -9,9 +9,13 @@ import {
   ProjectStatus,
   ProjectUpdateType,
   TicketPriority,
+  TicketSource,
   TicketStatus,
+  TicketUpdateType,
+  TicketWatcherType,
   UserRole,
 } from "@prisma/client"
+import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
 
@@ -22,8 +26,12 @@ async function main() {
   await prisma.invoice.deleteMany()
   await prisma.ticket.deleteMany()
   await prisma.project.deleteMany()
+  await prisma.clientAccess.deleteMany()
   await prisma.client.deleteMany()
   await prisma.user.deleteMany()
+
+  const demoPassword = process.env.SEED_DEFAULT_PASSWORD ?? "briax-demo"
+  const passwordHash = await bcrypt.hash(demoPassword, 10)
 
   const usersData = [
     { name: "Laura Gomez", email: "laura@briax.com", role: UserRole.OWNER, timezone: "America/Argentina/Buenos_Aires" },
@@ -35,10 +43,15 @@ async function main() {
     { name: "Valentina Herrera", email: "valentina@briax.com", role: UserRole.PARTNER_MANAGER, timezone: "America/Santiago" },
   ]
 
-  const userMap: Record<string, { id: string }> = {}
+  const userMap: Record<string, { id: string; name: string; email: string }> = {}
 
   for (const data of usersData) {
-    const user = await prisma.user.create({ data })
+    const user = await prisma.user.create({
+      data: {
+        ...data,
+        passwordHash,
+      },
+    })
     userMap[data.email] = user
   }
 
@@ -94,6 +107,46 @@ async function main() {
   for (const data of clientsData) {
     const client = await prisma.client.create({ data })
     clientMap[data.name] = client
+  }
+
+  const clientAccessData = [
+    {
+      clientName: "TechCorp Inc",
+      service: "Google Workspace",
+      username: "ops@techcorp.com",
+      password: "SuperSecure!2024",
+      url: "https://admin.google.com",
+      notes: "Cuenta administradora. MFA via SMS con John Smith.",
+    },
+    {
+      clientName: "TechCorp Inc",
+      service: "Hostinger",
+      username: "infra@techcorp.com",
+      password: "H0sting#990",
+      url: "https://hpanel.hostinger.com",
+      notes: "Plan empresarial, expira en mayo 2025.",
+    },
+    {
+      clientName: "Innovacion Retail",
+      service: "n8n",
+      username: "automations@innovacionretail.com",
+      password: "Flows!2025",
+      url: "https://n8n.briax.io",
+      notes: "Servidor dedicado, acceso SSO deshabilitado.",
+    },
+  ]
+
+  for (const access of clientAccessData) {
+    await prisma.clientAccess.create({
+      data: {
+        service: access.service,
+        username: access.username,
+        password: access.password,
+        url: access.url,
+        notes: access.notes,
+        client: { connect: { id: clientMap[access.clientName].id } },
+      },
+    })
   }
 
   const projectsData = [
@@ -213,45 +266,163 @@ async function main() {
   const ticketsData = [
     {
       title: "Revisar hero responsive",
-      description: "En iPhone 13 la cabecera se corta.",
+      description: "En iPhone 13 la cabecera se corta y el CTA no aparece.",
       status: TicketStatus.WAITING_CLIENT,
       priority: TicketPriority.HIGH,
+      source: TicketSource.CLIENT_PORTAL,
+      serviceArea: "Web corporativa",
+      environment: "Produccion",
+      notifyClient: true,
+      dueAt: new Date("2025-11-15T12:00:00Z"),
       clientName: "TechCorp Inc",
       projectName: "Rediseno web corporativo",
       assigneeEmail: "camila@briax.com",
+      watchers: [
+        { type: TicketWatcherType.CLIENT, email: "john@techcorp.com", name: "John Smith" },
+        { type: TicketWatcherType.INTERNAL, email: "camila@briax.com", name: "Camila Perez" },
+      ],
+      updates: [
+        {
+          type: TicketUpdateType.STATUS_CHANGE,
+          message: "Ticket creado y diagnosticado. Se envio captura al cliente.",
+          notifyClient: true,
+          public: true,
+          nextStatus: TicketStatus.WAITING_CLIENT,
+          previousStatus: TicketStatus.NEW,
+          authorEmail: "camila@briax.com",
+        },
+      ],
     },
     {
       title: "Integrar gateway de pagos",
-      description: "Configurar sandbox y flujos de devolucion.",
+      description: "Configurar sandbox, callbacks y manejo de reintentos.",
       status: TicketStatus.IN_PROGRESS,
       priority: TicketPriority.CRITICAL,
+      source: TicketSource.AUTOMATION,
+      serviceArea: "Checkout ecommerce",
+      environment: "Staging",
+      notifyClient: true,
+      dueAt: new Date("2025-11-20T09:00:00Z"),
       clientName: "StartupXYZ",
       projectName: "Lanzamiento ecommerce",
       assigneeEmail: "diego@briax.com",
+      watchers: [
+        { type: TicketWatcherType.CLIENT, email: "sarah@startupxyz.com", name: "Sarah Johnson" },
+        { type: TicketWatcherType.INTERNAL, email: "diego@briax.com", name: "Diego Alvarez" },
+      ],
+      updates: [
+        {
+          type: TicketUpdateType.NOTE,
+          message: "Webhook de devoluciones configurado. Falta aprobacion de sandbox.",
+          notifyClient: false,
+          public: false,
+          authorEmail: "diego@briax.com",
+        },
+        {
+          type: TicketUpdateType.STATUS_CHANGE,
+          message: "Gateway listo para pruebas del cliente.",
+          notifyClient: true,
+          public: true,
+          nextStatus: TicketStatus.WAITING_CLIENT,
+          previousStatus: TicketStatus.IN_PROGRESS,
+          authorEmail: "diego@briax.com",
+        },
+      ],
     },
     {
       title: "Ajustar pipeline nocturno",
-      description: "Errores intermitentes en transformaciones.",
+      description: "Errores intermitentes en transformaciones ETL. Revisar paso 3.",
       status: TicketStatus.NEW,
       priority: TicketPriority.MEDIUM,
+      source: TicketSource.MONITORING,
+      serviceArea: "Data warehouse",
+      environment: "Produccion",
+      notifyClient: true,
       clientName: "Enterprise Solutions",
       projectName: "Pipeline de datos operativos",
       assigneeEmail: "diego@briax.com",
+      watchers: [
+        { type: TicketWatcherType.CLIENT, email: "mike@enterprise.com", name: "Mike Davis" },
+        { type: TicketWatcherType.INTERNAL, email: "sofia@briax.com", name: "Sofia Torres" },
+      ],
+      updates: [
+        {
+          type: TicketUpdateType.NOTE,
+          message: "Alertas recibidas desde Datadog. Se congela ejecucion hasta nuevo aviso.",
+          notifyClient: true,
+          public: true,
+          nextStatus: TicketStatus.NEW,
+          previousStatus: TicketStatus.NEW,
+          authorEmail: "sofia@briax.com",
+        },
+      ],
     },
   ]
 
   for (const ticket of ticketsData) {
-    await prisma.ticket.create({
+    const createdTicket = await prisma.ticket.create({
       data: {
         title: ticket.title,
         description: ticket.description,
         status: ticket.status,
         priority: ticket.priority,
+        source: ticket.source,
+        serviceArea: ticket.serviceArea,
+        environment: ticket.environment,
+        notifyClient: ticket.notifyClient,
+        dueAt: ticket.dueAt,
         client: { connect: { id: clientMap[ticket.clientName].id } },
         project: { connect: { id: projectMap[ticket.projectName].id } },
         assignee: ticket.assigneeEmail ? { connect: { id: userMap[ticket.assigneeEmail].id } } : undefined,
       },
     })
+
+    const watcherPayload = (ticket.watchers ?? []).concat(
+      clientMap[ticket.clientName].contactEmail
+        ? [
+            {
+              type: TicketWatcherType.CLIENT,
+              email: clientMap[ticket.clientName].contactEmail!,
+              name: clientMap[ticket.clientName].contactName ?? clientMap[ticket.clientName].name,
+            },
+          ]
+        : [],
+    )
+
+    if (watcherPayload.length > 0) {
+      const uniqueByEmail = new Map<string, { type: TicketWatcherType; email: string; name?: string }>()
+      for (const watcher of watcherPayload) {
+        uniqueByEmail.set(watcher.email.toLowerCase(), watcher)
+      }
+      await prisma.ticketWatcher.createMany({
+        data: Array.from(uniqueByEmail.values()).map((watcher) => ({
+          ticketId: createdTicket.id,
+          type: watcher.type,
+          email: watcher.email,
+          name: watcher.name,
+        })),
+      })
+    }
+
+    if (ticket.updates && ticket.updates.length > 0) {
+      for (const update of ticket.updates) {
+        const author = update.authorEmail ? userMap[update.authorEmail] : undefined
+        await prisma.ticketUpdate.create({
+          data: {
+            ticketId: createdTicket.id,
+            type: update.type,
+            message: update.message,
+            notifyClient: update.notifyClient,
+            public: update.public,
+            nextStatus: update.nextStatus,
+            previousStatus: update.previousStatus,
+            authorId: author?.id,
+            authorName: author?.name,
+            authorEmail: update.authorEmail,
+          },
+        })
+      }
+    }
   }
 
   const invoicesData = [

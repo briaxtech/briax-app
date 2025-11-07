@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
 import { TicketTable } from "@/components/tickets/ticket-table"
-import { Plus } from "lucide-react"
+import { TicketCreateDialog } from "@/components/tickets/ticket-create-dialog"
+import { TicketFilters } from "@/components/tickets/ticket-filters"
 
 export default function TicketsPage() {
   return (
@@ -11,13 +11,11 @@ export default function TicketsPage() {
           <h1 className="text-3xl font-bold text-foreground">Tickets</h1>
           <p className="text-muted-foreground mt-2">Solicitudes de soporte e incidencias de proyecto</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nuevo ticket
-        </Button>
+        <TicketCreateDialog />
       </div>
 
-      {/* Tabla de tickets */}
+      <TicketFilters />
+
       <TicketTable />
     </div>
   )

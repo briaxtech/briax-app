@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import { CalendarClock, MoreHorizontal } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { MoreHorizontal } from "lucide-react"
 
 interface TicketRow {
   id: string
+  ticketNumber: number
   title: string
   clientName: string
   status: string
@@ -16,6 +19,10 @@ interface TicketRow {
   priority: string
   priorityLabel: string
   assigneeName: string
+  sourceLabel: string
+  serviceArea?: string | null
+  environment?: string | null
+  dueAt?: string | null
   createdAt: string
 }
 
@@ -38,11 +45,13 @@ export function TicketTable() {
   const [tickets, setTickets] = useState<TicketRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const queryString = searchParams.toString()
 
-  const fetchTickets = useCallback(async () => {
+  const fetchTickets = useCallback(async (query: string) => {
     try {
       setLoading(true)
-      const response = await fetch("/api/tickets", { method: "GET" })
+      const response = await fetch(`/api/tickets${query ? `?${query}` : ""}`, { method: "GET" })
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
         throw new Error(body?.message ?? "No se pudo obtener la lista de tickets")
@@ -58,8 +67,14 @@ export function TicketTable() {
   }, [])
 
   useEffect(() => {
-    fetchTickets()
-  }, [fetchTickets])
+    fetchTickets(queryString)
+  }, [fetchTickets, queryString])
+
+  useEffect(() => {
+    const handler = () => fetchTickets(queryString)
+    window.addEventListener("tickets:refresh", handler)
+    return () => window.removeEventListener("tickets:refresh", handler)
+  }, [fetchTickets, queryString])
 
   const formatDate = (value: string) => {
     const date = new Date(value)
@@ -73,12 +88,14 @@ export function TicketTable() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">#</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Ticket</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Cliente</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Estado</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Prioridad</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Origen</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Asignado a</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Creado</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Entrega</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Acciones</th>
             </tr>
           </thead>
@@ -104,6 +121,7 @@ export function TicketTable() {
             ) : (
               tickets.map((ticket) => (
                 <tr key={ticket.id} className="border-b border-border hover:bg-sidebar-accent/30 transition-colors">
+                  <td className="px-6 py-4 text-sm font-semibold text-muted-foreground">#{ticket.ticketNumber}</td>
                   <td className="px-6 py-4">
                     <Link
                       href={`/tickets/${ticket.id}`}
@@ -111,6 +129,12 @@ export function TicketTable() {
                     >
                       {ticket.title}
                     </Link>
+                    {ticket.serviceArea ? (
+                      <p className="text-xs text-muted-foreground">
+                        {ticket.serviceArea}
+                        {ticket.environment ? ` · ${ticket.environment}` : ""}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{ticket.clientName}</td>
                   <td className="px-6 py-4">
@@ -123,8 +147,18 @@ export function TicketTable() {
                       {ticket.priorityLabel}
                     </Badge>
                   </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{ticket.sourceLabel}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{ticket.assigneeName}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(ticket.createdAt)}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {ticket.dueAt ? (
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarClock className="w-3 h-3" />
+                        {formatDate(ticket.dueAt)}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="icon">
                       <MoreHorizontal className="w-4 h-4" />
