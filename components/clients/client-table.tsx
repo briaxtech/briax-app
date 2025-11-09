@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -28,11 +29,13 @@ export function ClientTable() {
   const [clients, setClients] = useState<ClientRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const queryString = searchParams.toString()
 
-  const fetchClients = useCallback(async () => {
+  const fetchClients = useCallback(async (query: string) => {
     try {
       setLoading(true)
-      const response = await fetch("/api/clients", { method: "GET" })
+      const response = await fetch(`/api/clients${query ? `?${query}` : ""}`, { method: "GET" })
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
         throw new Error(body?.message ?? "No se pudo obtener la lista de clientes")
@@ -48,16 +51,16 @@ export function ClientTable() {
   }, [])
 
   useEffect(() => {
-    fetchClients()
-  }, [fetchClients])
+    fetchClients(queryString)
+  }, [fetchClients, queryString])
 
   useEffect(() => {
     const handler = () => {
-      fetchClients()
+      fetchClients(queryString)
     }
     window.addEventListener("clients:refresh", handler)
     return () => window.removeEventListener("clients:refresh", handler)
-  }, [fetchClients])
+  }, [fetchClients, queryString])
 
   const formatDate = (value: string) => {
     const date = new Date(value)
@@ -67,9 +70,17 @@ export function ClientTable() {
 
   return (
     <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      <div
+        className="overflow-x-auto"
+        aria-label="Tabla de clientes, desliza horizontalmente para ver todas las columnas"
+      >
         <table className="w-full">
           <thead>
+            <tr className="sm:hidden">
+              <th colSpan={6} className="px-6 pt-4 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Desliza para ver todas las columnas
+              </th>
+            </tr>
             <tr className="border-b border-border">
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Cliente</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Contacto</th>

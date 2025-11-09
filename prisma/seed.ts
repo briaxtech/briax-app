@@ -20,6 +20,8 @@ import bcrypt from "bcryptjs"
 const prisma = new PrismaClient()
 
 async function main() {
+  await prisma.teamMember.deleteMany()
+  await prisma.teamRole.deleteMany()
   await prisma.partnerPayout.deleteMany()
   await prisma.partnerReferral.deleteMany()
   await prisma.partner.deleteMany()
@@ -53,6 +55,68 @@ async function main() {
       },
     })
     userMap[data.email] = user
+  }
+
+  const teamRolesData = [
+    { name: "Dirección", color: "#7C3AED" },
+    { name: "Operaciones", color: "#2563EB" },
+  ]
+
+  const teamRoleMap: Record<string, { id: string }> = {}
+
+  for (const role of teamRolesData) {
+    const created = await prisma.teamRole.create({ data: role })
+    teamRoleMap[role.name] = created
+  }
+
+  const teamMembersData = [
+    {
+      name: "Ana Demo",
+      email: "ana.demo@briax.com",
+      roleName: "Dirección",
+      location: "Buenos Aires, AR",
+      timezone: "America/Argentina/Buenos_Aires",
+      phone: "+54 11 4000-1100",
+      slackHandle: "@ana.demo",
+      preferredChannel: "Email",
+      availability: "09:00 - 18:00 ART",
+      focusAreas: ["Clientes estratégicos", "Coordinación general"],
+      responsibilities: ["Define roadmap", "Aprueba comunicaciones sensibles"],
+      isEscalationContact: true,
+    },
+    {
+      name: "Bruno Demo",
+      email: "bruno.demo@briax.com",
+      roleName: "Operaciones",
+      location: "Montevideo, UY",
+      timezone: "America/Montevideo",
+      phone: "+598 2 500-2200",
+      slackHandle: "@bruno.ops",
+      preferredChannel: "Slack",
+      availability: "08:00 - 17:00 UYT",
+      focusAreas: ["Automatizaciones", "Monitoreo"],
+      responsibilities: ["Mantiene integraciones", "Gestiona incidentes"],
+      isEscalationContact: true,
+    },
+  ]
+
+  for (const member of teamMembersData) {
+    await prisma.teamMember.create({
+      data: {
+        name: member.name,
+        email: member.email,
+        location: member.location,
+        timezone: member.timezone,
+        phone: member.phone,
+        slackHandle: member.slackHandle,
+        preferredChannel: member.preferredChannel,
+        availability: member.availability,
+        focusAreas: member.focusAreas,
+        responsibilities: member.responsibilities,
+        isEscalationContact: member.isEscalationContact,
+        role: member.roleName ? { connect: { id: teamRoleMap[member.roleName].id } } : undefined,
+      },
+    })
   }
 
   const clientsData = [

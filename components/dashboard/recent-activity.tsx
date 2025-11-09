@@ -58,8 +58,11 @@ export function RecentActivity({ items, loading }: RecentActivityProps) {
           <p className="text-sm text-muted-foreground">No hay actividad registrada recientemente.</p>
         ) : (
           activity.map((item) => (
-            <div key={item.id} className="flex items-start gap-4 pb-4 border-b border-border last:border-0">
-              <Badge className={typeColors[item.type] ?? "bg-muted text-muted-foreground"}>
+            <div
+              key={item.id}
+              className="flex flex-col gap-3 border-b border-border pb-4 last:border-0 sm:flex-row sm:items-start sm:gap-4"
+            >
+              <Badge className={`w-fit ${typeColors[item.type] ?? "bg-muted text-muted-foreground"}`}>
                 {typeLabels[item.type] ?? item.type}
               </Badge>
               <div className="flex-1">

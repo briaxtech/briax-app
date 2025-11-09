@@ -11,8 +11,8 @@ export async function MainLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background">
       <Sidebar />
       <Topbar userName={user.name} userEmail={user.email} />
-      {/* Main content with proper spacing for sidebar and topbar */}
-      <main className="ml-64 mt-16 p-6">{children}</main>
+      {/* Main content spacing adapts per breakpoint */}
+      <main className="px-4 pb-10 pt-20 sm:px-6 lg:ml-64 lg:px-10 lg:pb-12 lg:pt-24">{children}</main>
     </div>
   )
 }

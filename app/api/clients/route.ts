@@ -22,13 +22,28 @@ export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams
     const statusFilter = searchParams.get("status")
+    const searchValue = searchParams.get("search")?.trim()
 
-    const where: Prisma.ClientWhereInput | undefined = statusFilter
-      ? { status: statusFilter as ClientStatus }
-      : undefined
+    const isValidStatus = statusFilter && Object.values(ClientStatus).includes(statusFilter as ClientStatus)
+
+    const where: Prisma.ClientWhereInput = {}
+
+    if (isValidStatus) {
+      where.status = statusFilter as ClientStatus
+    }
+
+    if (searchValue) {
+      where.OR = [
+        { name: { contains: searchValue, mode: "insensitive" } },
+        { contactName: { contains: searchValue, mode: "insensitive" } },
+        { contactEmail: { contains: searchValue, mode: "insensitive" } },
+      ]
+    }
+
+    const whereInput = Object.keys(where).length > 0 ? where : undefined
 
     const clients = await prisma.client.findMany({
-      where,
+      where: whereInput,
       orderBy: { createdAt: "desc" },
       include: {
         _count: { select: { projects: true, tickets: true, invoices: true } },

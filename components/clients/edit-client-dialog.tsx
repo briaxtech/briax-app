@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, Pencil } from "lucide-react"
@@ -47,6 +47,7 @@ export function EditClientDialog({ clientId, defaultValues }: EditClientDialogPr
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const scrollRef = useRef<HTMLDivElement | null>(null)
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
@@ -87,6 +88,7 @@ export function EditClientDialog({ clientId, defaultValues }: EditClientDialogPr
 
   const disabled = isSubmitting || isPending
 
+
   return (
     <Dialog open={open} onOpenChange={(next) => !disabled && setOpen(next)}>
       <DialogTrigger asChild>
@@ -101,8 +103,10 @@ export function EditClientDialog({ clientId, defaultValues }: EditClientDialogPr
           <DialogDescription>Actualiza la informacion del cliente y los servicios asociados.</DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form className="grid gap-6" onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="relative">
+          <div ref={scrollRef} className="max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 sm:pr-0">
+          <Form {...form}>
+            <form className="grid gap-6 pb-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -292,7 +296,9 @@ export function EditClientDialog({ clientId, defaultValues }: EditClientDialogPr
               </Button>
             </DialogFooter>
           </form>
-        </Form>
+          </Form>
+        </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

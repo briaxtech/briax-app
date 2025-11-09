@@ -35,7 +35,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <Card className="border-border bg-card/70 p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">Linea de tiempo</p>
               <p className="text-xs text-muted-foreground">Seguimiento y comunicaciones del ticket.</p>

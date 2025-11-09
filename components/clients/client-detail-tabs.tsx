@@ -116,21 +116,27 @@ export function ClientDetailTabs({ clientId, client, projects, tickets, invoices
     <div className="space-y-6">
       {/* Navegacion de pestanas */}
       <div className="border-b border-border">
-        <div className="flex gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div
+          className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0"
+          aria-label="Navegacion de pestañas del cliente"
+        >
+          <div className="flex gap-1 whitespace-nowrap">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "border-b-2 border-primary text-foreground"
+                    : "border-b-2 border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
+        <p className="px-4 pb-2 text-xs text-muted-foreground sm:hidden">Desliza para ver todas las secciones.</p>
       </div>
 
       {/* Contenido */}

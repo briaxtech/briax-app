@@ -13,7 +13,7 @@ export function RevenueChart({ data, loading }: RevenueChartProps) {
   const chartData = data.length > 0 ? data : [{ month: "Sin datos", revenue: 0, partner: 0 }]
 
   return (
-    <Card className="p-6 border-border bg-card/50 backdrop-blur-sm col-span-2">
+    <Card className="col-span-1 border-border bg-card/50 p-6 backdrop-blur-sm lg:col-span-2">
       <h3 className="text-lg font-semibold text-foreground mb-6">Tendencia de ingresos</h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>

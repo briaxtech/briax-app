@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOfMonth, startOfWeek, subMonths } from "date-fns"
 import { es } from "date-fns/locale"
-import { Calendar, Loader2, RefreshCw } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, Loader2, RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -129,7 +129,7 @@ export function ProjectCalendar() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <Calendar className="h-5 w-5 text-primary" />
           <div>
@@ -139,21 +139,29 @@ export function ProjectCalendar() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button className="hidden md:inline-flex" variant="outline" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
             Mes anterior
           </Button>
-          <Button variant="outline" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+          <Button className="hidden md:inline-flex" variant="outline" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             Mes siguiente
           </Button>
-          <Button variant="outline" onClick={() => fetchProjects(currentMonth)} disabled={loading}>
+          <Button
+            className="hidden md:inline-flex"
+            variant="outline"
+            onClick={() => fetchProjects(currentMonth)}
+            disabled={loading}
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">{format(currentMonth, "MMMM yyyy", { locale: es })}</h3>
+      <div className="flex flex-col gap-1 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <h3 className="text-lg font-semibold text-foreground capitalize">
+          {format(currentMonth, "MMMM yyyy", { locale: es })}
+        </h3>
+        <p className="text-xs text-muted-foreground">Actualiza el mes con los controles rapidos.</p>
       </div>
 
       {error && (
@@ -162,62 +170,54 @@ export function ProjectCalendar() {
         </Card>
       )}
 
-      <div className="grid grid-cols-7 gap-2 text-xs text-muted-foreground">
-        {["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"].map((day) => (
-          <div key={day} className="px-2 py-1 text-center font-semibold uppercase tracking-wide">
-            {day}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-2">
+      <div className="space-y-3 md:hidden">
         {days.map((day) => {
-          const isCurrentMonth = isSameMonth(day, currentMonth)
           const dateKey = format(day, "yyyy-MM-dd")
           const entries = projectsByDate.get(dateKey) ?? []
+          const isCurrentMonth = isSameMonth(day, currentMonth)
           const isSelected = selectedDate ? isSameDay(day, selectedDate) : false
-
           return (
-            <div
-              key={dateKey}
-              className={cn(
-                "rounded-lg border border-border bg-card/40 p-2 transition-colors",
-                !isCurrentMonth && "opacity-40",
-                isSelected && "border-primary shadow-sm",
-              )}
-              onClick={() => setSelectedDate(day)}
-              role="button"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-foreground">{format(day, "d")}</span>
-                {entries.length > 0 && (
-                  <span className="text-[10px] font-medium text-primary">{entries.length} proyectos</span>
-                )}
-              </div>
-              <div className="space-y-2">
-                {entries.slice(0, 3).map((project) => (
-                  <button
-                    key={project.id}
-                    className={cn(
-                      "w-full rounded-md border px-2 py-1 text-left text-xs",
-                      statusColors[project.status] ?? "border-muted text-muted-foreground",
-                    )}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      handleSelectProject(project)
-                    }}
-                  >
-                    <p className="font-semibold leading-tight">{project.name}</p>
-                    <p className="text-[10px] leading-tight">{project.statusLabel}</p>
-                  </button>
-                ))}
-                {entries.length > 3 && (
-                  <p className="text-[10px] text-muted-foreground">+{entries.length - 3} mas</p>
-                )}
-              </div>
-            </div>
+            <DayCard
+              key={`list-${dateKey}`}
+              day={day}
+              entries={entries}
+              isCurrentMonth={isCurrentMonth}
+              isSelected={isSelected}
+              onSelect={setSelectedDate}
+              onOpen={handleSelectProject}
+              variant="list"
+            />
           )
         })}
+      </div>
+
+      <div className="hidden md:block">
+        <div className="grid grid-cols-7 gap-2 text-xs text-muted-foreground">
+          {["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"].map((day) => (
+            <div key={day} className="px-2 py-1 text-center font-semibold uppercase tracking-wide">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 grid grid-cols-7 gap-2">
+          {days.map((day) => {
+            const dateKey = format(day, "yyyy-MM-dd")
+            const entries = projectsByDate.get(dateKey) ?? []
+            const isCurrentMonth = isSameMonth(day, currentMonth)
+            const isSelected = selectedDate ? isSameDay(day, selectedDate) : false
+            return (
+              <DayCard
+                key={`grid-${dateKey}`}
+                day={day}
+                entries={entries}
+                isCurrentMonth={isCurrentMonth}
+                isSelected={isSelected}
+                onSelect={setSelectedDate}
+                onOpen={handleSelectProject}
+              />
+            )
+          })}
+        </div>
       </div>
 
       <ProjectDetailDrawer
@@ -226,6 +226,117 @@ export function ProjectCalendar() {
         project={selectedProject}
         onProjectUpdated={handleUpdated}
       />
+
+      <div className="fixed inset-x-0 bottom-6 z-30 flex justify-center md:hidden">
+        <div className="inline-flex items-center gap-3 rounded-full border border-border bg-card/95 px-4 py-2 shadow-lg backdrop-blur">
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Mes anterior"
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Actualizar mes"
+            onClick={() => fetchProjects(currentMonth)}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Mes siguiente"
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface DayCardProps {
+  day: Date
+  entries: ProjectCalendarEntry[]
+  isCurrentMonth: boolean
+  isSelected: boolean
+  onSelect: (day: Date) => void
+  onOpen: (project: ProjectCalendarEntry) => void
+  variant?: "grid" | "list"
+}
+
+function DayCard({ day, entries, isCurrentMonth, isSelected, onSelect, onOpen, variant = "grid" }: DayCardProps) {
+  const isList = variant === "list"
+  const maxVisible = isList ? 4 : 3
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border border-border bg-card/40 transition-colors",
+        isList ? "p-3" : "p-2",
+        !isCurrentMonth && "opacity-40",
+        isSelected && "border-primary shadow-sm",
+      )}
+      onClick={() => onSelect(day)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onSelect(day)
+        }
+      }}
+    >
+      <div className={cn("mb-2 flex items-center justify-between", isList && "flex-wrap gap-2")}>
+        {isList ? (
+          <>
+            <span className="text-base font-semibold capitalize text-foreground">
+              {format(day, "EEEE d 'de' MMMM", { locale: es })}
+            </span>
+            {entries.length > 0 && (
+              <span className="text-xs font-medium text-primary">{entries.length} proyectos</span>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="text-sm font-semibold text-foreground">{format(day, "d")}</span>
+            {entries.length > 0 && (
+              <span className="text-[10px] font-medium text-primary">{entries.length} proyectos</span>
+            )}
+          </>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        {entries.slice(0, maxVisible).map((project) => (
+          <button
+            key={project.id}
+            className={cn(
+              "w-full rounded-md border px-2 py-1 text-left text-[11px]",
+              statusColors[project.status] ?? "border-muted text-muted-foreground",
+            )}
+            onClick={(event) => {
+              event.stopPropagation()
+              onOpen(project)
+            }}
+          >
+            <p className="font-semibold leading-tight text-foreground truncate" title={project.name}>
+              {project.name}
+            </p>
+            <p className="text-[10px] leading-tight">{project.statusLabel}</p>
+          </button>
+        ))}
+        {entries.length === 0 && isList ? (
+          <p className="text-xs text-muted-foreground">Sin entregas programadas.</p>
+        ) : null}
+        {entries.length > maxVisible && (
+          <p className="text-[10px] text-muted-foreground">+{entries.length - maxVisible} mas</p>
+        )}
+      </div>
     </div>
   )
 }

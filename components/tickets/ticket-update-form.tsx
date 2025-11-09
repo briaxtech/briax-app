@@ -21,6 +21,8 @@ const updateTypeLabels: Record<TicketUpdateType, string> = {
   INCIDENT: "Incidencia",
 }
 
+const KEEP_STATUS_VALUE = "__KEEP_CURRENT_STATUS__"
+
 export function TicketUpdateForm({ ticketId }: { ticketId: string }) {
   const { toast } = useToast()
   const router = useRouter()
@@ -115,14 +117,17 @@ export function TicketUpdateForm({ ticketId }: { ticketId: string }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Actualizar estado</FormLabel>
-                <Select value={field.value ?? ""} onValueChange={(value) => field.onChange(value || undefined)}>
+                <Select
+                  value={field.value ?? KEEP_STATUS_VALUE}
+                  onValueChange={(value) => field.onChange(value === KEEP_STATUS_VALUE ? undefined : (value as TicketStatus))}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Mantener estado actual" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem key="keep" value="">
+                    <SelectItem key={KEEP_STATUS_VALUE} value={KEEP_STATUS_VALUE}>
                       Mantener estado actual
                     </SelectItem>
                     {Object.values(TicketStatus).map((status) => (

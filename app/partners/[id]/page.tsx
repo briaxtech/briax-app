@@ -99,7 +99,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
           <Detail label="Tipo" value={typeLabels[partner.type]} />
         </div>
         <div className="border-t border-border pt-6">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Badge className={statusColors[partner.status]}>{statusLabels[partner.status]}</Badge>
             {partner.notes ? <p className="text-sm text-muted-foreground">{partner.notes}</p> : null}
           </div>
@@ -118,7 +118,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
                   key={referral.id}
                   className="p-4 rounded-md border border-border hover:bg-sidebar-accent/30 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">{referral.client?.name ?? "Sin cliente"}</p>
                       <p className="text-xs text-muted-foreground">{referral.project?.name ?? "Sin proyecto"}</p>
@@ -144,7 +144,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
             ) : (
               partner.payouts.map((payout) => (
                 <div key={payout.id} className="p-4 rounded-md border border-border">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm font-semibold text-foreground">
                       {formatCurrency(payout.amount, payout.currency)}
                     </p>

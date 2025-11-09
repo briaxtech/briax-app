@@ -63,15 +63,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Encabezado */}
-      <div>
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Panel</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground">
           Resumen general del estado de clientes, proyectos y operaciones.
         </p>
       </div>
 
       {/* Indicadores clave */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <KPICard label="Clientes activos" value={kpis ? formatNumber(kpis.activeClients) : "..."} icon={Users} />
         <KPICard
           label="Proyectos activos"
@@ -99,7 +99,7 @@ export default function DashboardPage() {
       )}
 
       {/* Graficos y actividad */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <RevenueChart data={revenue} loading={loading} />
         <RecentActivity items={recentActivity} loading={loading} />
       </div>

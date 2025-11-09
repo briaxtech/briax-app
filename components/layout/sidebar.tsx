@@ -6,7 +6,7 @@ import { BarChart3, Users, FolderOpen, Ticket, FileText, Users2, Settings, LogOu
 import { cn } from "@/lib/utils"
 import { useLogout } from "@/hooks/use-logout"
 
-const navigationItems = [
+export const navigationItems = [
   {
     label: "Panel",
     href: "/dashboard",
@@ -56,7 +56,7 @@ export function Sidebar() {
   const { logout, pending } = useLogout()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+    <aside className="fixed left-0 top-0 z-30 hidden h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar shadow-sm lg:flex">
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <Link href="/dashboard" className="flex items-center gap-2">

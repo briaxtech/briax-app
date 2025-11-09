@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Loader2 } from "lucide-react"
@@ -39,6 +39,7 @@ export function NewClientDialog() {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const scrollRef = useRef<HTMLDivElement | null>(null)
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
@@ -110,8 +111,10 @@ export function NewClientDialog() {
           <DialogDescription>Completa la informacion clave para comenzar a trabajar con el cliente.</DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form className="grid gap-6" onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="relative">
+          <div ref={scrollRef} className="max-h-[calc(100vh-8rem)] overflow-y-auto pr-1 sm:pr-0">
+          <Form {...form}>
+            <form className="grid gap-6 pb-4" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -301,7 +304,9 @@ export function NewClientDialog() {
               </Button>
             </DialogFooter>
           </form>
-        </Form>
+          </Form>
+        </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
