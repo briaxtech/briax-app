@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { ProjectStatus } from "@prisma/client"
+import { z } from "zod"
 
 import { prisma } from "@/lib/db"
-import { getProjectStatusLabel, getProjectTypeLabel } from "@/lib/projects/constants"
+import { projectToCalendarEntry } from "@/lib/projects/mappers"
+import { projectFormSchema } from "@/lib/validation/project-form"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -32,8 +34,8 @@ export async function GET(req: NextRequest) {
         ...(dateFilters ?? {}),
       },
       include: {
-        client: { select: { name: true, contactEmail: true } },
-        manager: { select: { name: true, email: true } },
+        client: { select: { id: true, name: true, contactEmail: true } },
+        manager: { select: { id: true, name: true, email: true } },
         updates: {
           select: { id: true, type: true, title: true, createdAt: true },
           orderBy: { createdAt: "desc" },
@@ -45,20 +47,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       projects: projects.map((project) => ({
-        id: project.id,
-        clientId: project.clientId,
-        name: project.name,
-        clientName: project.client?.name ?? "Sin cliente",
-        clientEmail: project.client?.contactEmail ?? null,
-        type: getProjectTypeLabel(project.type),
-        rawType: project.type,
-        status: project.status,
-        statusLabel: getProjectStatusLabel(project.status),
-        startDate: project.startDate,
-        dueDate: project.dueDate,
-        managerName: project.manager?.name ?? "No asignado",
-        managerEmail: project.manager?.email ?? null,
-        createdAt: project.createdAt,
+        ...projectToCalendarEntry(project),
         updates: project.updates.map((update) => ({
           id: update.id,
           type: update.type,
@@ -70,5 +59,42 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("GET /api/projects error:", error)
     return NextResponse.json({ message: "Error al obtener proyectos" }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const payload = await req.json()
+    const data = projectFormSchema.parse(payload)
+
+    const dueDate = data.dueDate!
+
+    const project = await prisma.project.create({
+      data: {
+        name: data.name,
+        type: data.type,
+        status: ProjectStatus.DISCOVERY,
+        description: data.description && data.description.length > 0 ? data.description : null,
+        clientId: data.clientId,
+        managerId: data.managerId ?? null,
+        startDate: data.startDate ?? null,
+        dueDate,
+      },
+      include: {
+        client: { select: { id: true, name: true, contactEmail: true } },
+        manager: { select: { id: true, name: true, email: true } },
+      },
+    })
+
+    return NextResponse.json({ project: projectToCalendarEntry(project) }, { status: 201 })
+  } catch (error) {
+    console.error("POST /api/projects error:", error)
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { message: "Datos invalidos", issues: error.issues },
+        { status: 400 },
+      )
+    }
+    return NextResponse.json({ message: "Error al crear el proyecto" }, { status: 500 })
   }
 }

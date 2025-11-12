@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PartnerStatus, PartnerType, PayoutStatus } from "@prisma/client"
+import { PartnerStatus, PartnerType, PayoutStatus, Prisma } from "@prisma/client"
 
 import { prisma } from "@/lib/db"
 
@@ -25,9 +25,23 @@ export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams
     const statusFilter = searchParams.get("status") as PartnerStatus | null
+    const typeFilter = searchParams.get("type") as PartnerType | null
+    const searchValue = searchParams.get("search")?.trim()
+
+    const where: Prisma.PartnerWhereInput = {}
+
+    if (statusFilter) {
+      where.status = statusFilter
+    }
+    if (typeFilter) {
+      where.type = typeFilter
+    }
+    if (searchValue && searchValue.length > 0) {
+      where.name = { contains: searchValue, mode: "insensitive" }
+    }
 
     const partners = await prisma.partner.findMany({
-      where: statusFilter ? { status: statusFilter } : undefined,
+      where: Object.keys(where).length > 0 ? where : undefined,
       include: {
         referrals: {
           select: { commissionAmount: true, commissionBase: true, status: true },

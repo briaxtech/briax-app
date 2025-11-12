@@ -101,32 +101,26 @@ export function TeamDirectory({ members, roles }: TeamDirectoryProps) {
           No encontramos integrantes con ese criterio. Restablecé los filtros para ver todo el equipo.
         </div>
       ) : (
-        <Accordion type="multiple" className="rounded-xl border border-border bg-card">
+        <Accordion type="multiple" className="divide-y divide-border rounded-xl border border-border bg-card">
           {filteredMembers.map((member) => (
             <AccordionItem key={member.id} value={member.id} className="group/row">
               <AccordionTrigger
                 showIcon={false}
-                className="flex w-full items-center gap-4 rounded-none border-none bg-transparent px-4 py-3 text-left text-base font-medium transition-colors hover:bg-muted/80 hover:no-underline dark:hover:bg-muted/30"
+                className="flex w-full items-center gap-3 rounded-none border-none bg-transparent px-4 py-3 text-left text-base font-medium transition-colors hover:bg-muted/80 hover:no-underline dark:hover:bg-muted/30"
               >
-                <div className="flex flex-1 flex-wrap items-center gap-4">
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex flex-1 items-center gap-3">
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold text-foreground">{member.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">{member.email}</p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide">
+                  <div className="flex items-center gap-2">
                     {member.role ? (
                       <RoleBadge role={member.role} />
                     ) : (
                       <Badge variant="outline">Sin rol</Badge>
                     )}
-                    {member.isEscalationContact && (
-                      <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                        Escalación
-                      </Badge>
-                    )}
                   </div>
                 </div>
-                <div className="ml-auto flex items-center gap-3">
+                <div className="ml-auto flex items-center gap-2">
                   <TeamMemberDialog
                     roles={roles}
                     member={member}
@@ -155,14 +149,25 @@ export function TeamDirectory({ members, roles }: TeamDirectoryProps) {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="grid gap-4 rounded-lg border border-border/70 bg-background/80 p-4 text-sm sm:grid-cols-2">
-                  <InfoLine icon={MapPin} label="Ubicación" value={formatLocation(member)} />
-                  <InfoLine icon={Clock} label="Horario" value={member.availability ?? "Por definir"} />
-                  <InfoLine icon={Phone} label="Contacto" value={member.phone ?? "No registrado"} />
-                  <InfoLine icon={Mail} label="Preferencia" value={member.preferredChannel ?? "Email"} />
-                  {member.slackHandle && (
-                    <InfoLine icon={MessageSquare} label="Slack" value={member.slackHandle} />
-                  )}
+                <div className="rounded-lg border border-border/70 bg-background/80 p-4 text-sm space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Correo</p>
+                    <p className="text-sm text-foreground break-all">{member.email}</p>
+                  </div>
+                  {member.isEscalationContact ? (
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                      Escalación
+                    </Badge>
+                  ) : null}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <InfoLine icon={MapPin} label="Ubicación" value={formatLocation(member)} />
+                    <InfoLine icon={Clock} label="Horario" value={member.availability ?? "Por definir"} />
+                    <InfoLine icon={Phone} label="Contacto" value={member.phone ?? "No registrado"} />
+                    <InfoLine icon={Mail} label="Preferencia" value={member.preferredChannel ?? "Email"} />
+                    {member.slackHandle && (
+                      <InfoLine icon={MessageSquare} label="Slack" value={member.slackHandle} />
+                    )}
+                  </div>
                 </div>
 
                 {member.responsibilities?.length ? (

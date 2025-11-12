@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { MoreHorizontal } from "lucide-react"
 
 interface ClientRow {
@@ -68,19 +69,76 @@ export function ClientTable() {
     return date.toLocaleDateString("es-ES")
   }
 
+  const renderStateMessage = (message: string, tone: "muted" | "error" = "muted") => (
+    <p
+      className={`px-6 py-6 text-center text-sm ${
+        tone === "muted" ? "text-muted-foreground" : "text-destructive"
+      }`}
+    >
+      {message}
+    </p>
+  )
+
+  const renderStatusBadge = (client: ClientRow) => (
+    <Badge className={statusColors[client.status as keyof typeof statusColors] ?? "bg-muted text-muted-foreground"}>
+      {client.statusLabel ?? client.status}
+    </Badge>
+  )
+
   return (
-    <Card className="border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+    <Card className="border-border bg-card/50 backdrop-blur-sm">
+      {/* Vista mobile / md */}
+      <div className="md:hidden">
+        {loading
+          ? renderStateMessage("Cargando clientes...")
+          : error
+            ? renderStateMessage(error, "error")
+            : clients.length === 0
+              ? renderStateMessage("Todavia no hay clientes registrados.")
+              : (
+                  <Accordion type="single" collapsible className="divide-y divide-border">
+                    {clients.map((client) => (
+                      <AccordionItem key={client.id} value={client.id} className="px-4">
+                        <AccordionTrigger className="items-center gap-2 py-4 text-left">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{client.name}</p>
+                          </div>
+                          <div className="ml-auto mr-1 flex items-center">{renderStatusBadge(client)}</div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-4 text-sm text-muted-foreground">
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">Contacto</p>
+                              <p className="text-foreground">{client.contactName || "Sin asignar"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">Correo</p>
+                              <p className="text-foreground break-all">{client.contactEmail || "-"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">Fecha de alta</p>
+                              <p className="text-foreground">{formatDate(client.createdAt)}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button asChild variant="outline" className="w-full">
+                                <Link href={`/clients/${client.id}`}>Ver detalles</Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+      </div>
+
+      {/* Vista de tabla para pantallas grandes */}
       <div
-        className="overflow-x-auto"
+        className="hidden md:block overflow-x-auto"
         aria-label="Tabla de clientes, desliza horizontalmente para ver todas las columnas"
       >
         <table className="w-full">
           <thead>
-            <tr className="sm:hidden">
-              <th colSpan={6} className="px-6 pt-4 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Desliza para ver todas las columnas
-              </th>
-            </tr>
             <tr className="border-b border-border">
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Cliente</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Contacto</th>
@@ -122,11 +180,7 @@ export function ClientTable() {
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{client.contactName || "-"}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{client.contactEmail || "-"}</td>
-                  <td className="px-6 py-4">
-                    <Badge className={statusColors[client.status as keyof typeof statusColors] ?? "bg-muted text-muted-foreground"}>
-                      {client.statusLabel ?? client.status}
-                    </Badge>
-                  </td>
+                  <td className="px-6 py-4">{renderStatusBadge(client)}</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(client.createdAt)}</td>
                   <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="icon">

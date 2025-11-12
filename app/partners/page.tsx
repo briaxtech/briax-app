@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { PartnerTable } from "@/components/partners/partner-table"
+import { PartnerFilters } from "@/components/partners/partner-filters"
 import { Plus } from "lucide-react"
 
 export default function PartnersPage() {
@@ -17,6 +18,7 @@ export default function PartnersPage() {
         </Button>
       </div>
 
+      <PartnerFilters />
       {/* Tabla de socios */}
       <PartnerTable />
     </div>

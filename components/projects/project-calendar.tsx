@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { getProjectStatusLabel } from "@/lib/projects/constants"
+import type { ProjectCalendarEntry } from "@/lib/projects/types"
 
 import { ProjectDetailDrawer } from "./project-detail-drawer"
 
@@ -22,23 +23,11 @@ const statusColors: Record<string, string> = {
   CLOSED: "border-gray-500/40 bg-gray-500/10 text-gray-500",
 }
 
-type ProjectCalendarEntry = {
-  id: string
-  name: string
-  clientName: string
-  clientEmail: string | null
-  type: string
-  rawType: string
-  status: string
-  statusLabel: string
-  startDate: string | null
-  dueDate: string | null
-  managerName: string
-  managerEmail: string | null
-  createdAt: string
+type ProjectCalendarProps = {
+  refreshToken?: number
 }
 
-export function ProjectCalendar() {
+export function ProjectCalendar({ refreshToken = 0 }: ProjectCalendarProps = {}) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()))
   const [projects, setProjects] = useState<ProjectCalendarEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -76,7 +65,7 @@ export function ProjectCalendar() {
 
   useEffect(() => {
     fetchProjects(currentMonth)
-  }, [currentMonth, fetchProjects])
+  }, [currentMonth, fetchProjects, refreshToken])
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 })
